@@ -1,20 +1,14 @@
 let mainCharacter;
 let obstacles = [];
-let currentStageIndex = 0;
 let bg;
+let gameManager;
 let speed = 5;
 
 function setup() {
   createCanvas(800, 400);
-  mainCharacter = new Character(); // 캐릭터 생성
-  bg = new Background(); // 배경 생성
-  loadStage(currentStageIndex); // 첫 번째 스테이지 로드
-}
-
-function loadStage(stageIndex) {
-  const stage = stages[stageIndex];
-  obstacles = stage.obstacles.map((ob) => new Obstacle(ob.type, ob.xPosition));
-  speed = stage.speed;
+  mainCharacter = new Character();
+  bg = new Background();
+  gameManager = new GameManager(stages);
 }
 
 function draw() {
@@ -23,24 +17,40 @@ function draw() {
   bg.show(); // 배경 표시
   bg.update(speed); // 배경 업데이트
 
-  mainCharacter.show(); // 캐릭터 표시
-  mainCharacter.update(); // 캐릭터 업데이트
+  if (gameManager.isGameStarted()) {
+    mainCharacter.show(); // 캐릭터 표시
+    mainCharacter.update(); // 캐릭터 업데이트
 
-  for (let obs of obstacles) {
-    obs.show(); // 장애물 표시
-    obs.update(speed); // 장애물 업데이트
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const obs = obstacles[i];
+      obs.show();
+      obs.update(speed);
 
-    if (obs.hits(mainCharacter)) {
-      alert("Game Over");
-      noLoop(); // 게임 오버 처리
+      if (obs.hits(mainCharacter)) {
+        alert("Game Over");
+        noLoop();
+      }
+
+      if (obs.offscreen()) {
+        obstacles.splice(i, 1);
+        gameManager.updateScore(1); // 점수 업데이트
+      }
     }
-  }
 
-  // 기타 게임 로직 (스코어, 스테이지 전환 등)
+    if (obstacles.length === 0) {
+      gameManager.nextStage();
+    }
+  } else if (gameManager.isGameEnded()) {
+    gameManager.showEndingScreen();
+  } else {
+    gameManager.showStartScreen();
+  }
 }
 
 function keyPressed() {
   if (key == " ") {
-    mainCharacter.jump(); // 캐릭터 점프
+    if (!gameManager.isGameStarted() && !gameManager.isGameEnded()) {
+      gameManager.startGame();
+    } else mainCharacter.jump(); // 캐릭터 점프
   }
 }
