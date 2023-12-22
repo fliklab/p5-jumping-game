@@ -35,16 +35,13 @@ class Obstacle {
     this.x -= speed;
   }
 
-  offscreen() {
-    return this.x < -this.size;
-  }
-
   hits(character) {
     let distance = dist(this.x, this.y, character.x, character.y);
     return distance < 25;
   }
 
   offscreen() {
+    // 화면 밖으로 나갔는지 판별
     return this.x < -this.type.size;
   }
 }
